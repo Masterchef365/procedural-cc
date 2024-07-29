@@ -1,3 +1,6 @@
+local modem = peripheral.find("modem")
+modem.open(9)
+
 -- Read initial position from file
 local file = fs.open("position.txt", "r")
 local initial_pos = vector.new(
@@ -11,13 +14,13 @@ print("Width:", WIDTH)
 
 -- Configuration
 THRESHOLD = 1.0
-DENSITY = 12/(24*24*24)
-LENGTH = 32
-HEIGHT = 32
+DENSITY = 4/(24*24*24)
+LENGTH = 24
+HEIGHT = 24
 WIDTH_REPEATS = 2
 ENDERCHEST_SLOT = 1
 BLOCK_SLOT = 2
-math.randomseed(3)
+math.randomseed(5)
 
 -- Determine # of points
 VOLUME = LENGTH * WIDTH * HEIGHT * WIDTH_REPEATS
@@ -136,27 +139,41 @@ end
 -- Thingy
 turtle.up()
 
+local do_abort = false
 for rep=1,WIDTH_REPEATS do
-    turtle.forward()
+    turtle.forward() -- Begin rep
 
     -- Do a run through one width
     local z_dir = 1
     for y=1,HEIGHT do
-        for z=1,LENGTH do
-            if walltest(cur_pos) then
-                placer()
-            end
-            if not (z == LENGTH) then
-                turtle.forward()
-                cur_pos.z = cur_pos.z + z_dir
+        local abort_round = do_abort and (z_dir == 1)
+        if not(abort_round) then
+            for z=1,LENGTH do
+                if walltest(cur_pos) then
+                    placer()
+                end
+                if not (z == LENGTH) then
+                    turtle.forward()
+                    cur_pos.z = cur_pos.z + z_dir
+                end
             end
         end
+
         turtle.up()
         cur_pos.y = cur_pos.y + 1
 
-        turtle.turnRight()
-        turtle.turnRight()
-        z_dir = -z_dir
+        if not(abort_round) then
+            turtle.turnRight()
+            turtle.turnRight()
+            z_dir = -z_dir
+        end
+
+        os.startTimer(1)
+        local event, modemSide, senderChannel, replyChannel, message, senderDistance = os.pullEvent()
+        if event == "modem_message" and message == "abort" then
+            print("Aborting")
+            do_abort = true
+        end
     end
 
     -- Return to the beginning
@@ -168,7 +185,7 @@ for rep=1,WIDTH_REPEATS do
         turtle.turnRight()
     end
 
-    turtle.back()
+    turtle.back() -- End rep
 
     -- Travel to next width part
     if (rep == WIDTH_REPEATS) then
