@@ -12,15 +12,18 @@ print("Width:", WIDTH)
 -- Configuration
 THRESHOLD = 1.0
 DENSITY = 24/(24*24*24)
-LENGTH = 60
-HEIGHT = 60
-WIDTH_REPEATS = 3
+LENGTH = 16
+HEIGHT = 16
+WIDTH_REPEATS = 1
+ENDERCHEST_SLOT = 1
+BLOCK_SLOT = 2
+math.randomseed(3)
 
 -- Determine # of points
 VOLUME = LENGTH * WIDTH * HEIGHT * WIDTH_REPEATS
 N_POINTS = math.floor(DENSITY * VOLUME)
-
-math.randomseed(2)
+N_POINTS = math.max(N_POINTS, 3)
+print("# of points:", N_POINTS)
 
 -- Utils
 function rand_point()
@@ -73,18 +76,20 @@ function walltest(pos)
 end
 
 function placer()
-    if turtle.getItemCount() > 0 then
+    turtle.select(BLOCK_SLOT)   
+    if turtle.getItemCount() == 0 then
+        turtle.select(ENDERCHEST_SLOT)
         turtle.placeDown()
-        return true
-    end
-    for i=1,16 do
-        turtle.select(i)   
-        if turtle.getItemCount() > 0 then
-            turtle.placeDown()
-            return true
+        turtle.select(BLOCK_SLOT)
+        while not (turtle.suckDown() or turtle.getItemCount() > 0) do
+            print("Waiting for enderchest ...")
+            sleep(1)
         end
+        turtle.select(ENDERCHEST_SLOT)
+        turtle.digDown()
+        turtle.select(BLOCK_SLOT)   
     end
-    return false
+    turtle.placeDown()
 end
 
 function turndir(direction)
