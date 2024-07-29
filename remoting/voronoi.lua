@@ -15,9 +15,9 @@ print("Width:", WIDTH)
 -- Configuration
 THRESHOLD = 1.0
 DENSITY = 4/(24*24*24)
-LENGTH = 24
-HEIGHT = 24
-WIDTH_REPEATS = 2
+LENGTH = 24*5
+HEIGHT = 24*3
+WIDTH_REPEATS = 5
 ENDERCHEST_SLOT = 1
 BLOCK_SLOT = 2
 math.randomseed(5)
@@ -203,3 +203,5 @@ for rep=1,WIDTH_REPEATS do
     end
     cur_pos.y = 0
 end
+
+print("Done!")
