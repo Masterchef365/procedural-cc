@@ -4,7 +4,7 @@ local bit = require "bit32"
 function walltest(pos)
     local uv = (pos / LENGTH) * 2 - vector.new(1,1,1);
 
-    local zoomout = 4 -- LENGTH / 10
+    local zoomout = 40 -- LENGTH / 10
     uv = uv * zoomout
 
     local l2 = uv.z*uv.z + uv.x*uv.x
@@ -14,8 +14,8 @@ function walltest(pos)
     local a = math.floor(uv.x * k)
     local b = math.floor(uv.z * k)
 
-    local nnn = bit.bxor(a, b) % 5
-    return nnn == 0
+    local nnn = bit.bxor(a, b) % 3
+    return nnn == 2
 end
 
 NUM_TURTLES = 19
