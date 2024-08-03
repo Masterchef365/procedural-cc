@@ -138,71 +138,65 @@ function horiz_travel(direction, times)
 end
 
 -- Thingy
-turtle.up()
-
-local do_abort = false
+local z_dir = 1
 for rep=1,WIDTH_REPEATS do
-    turtle.forward() -- Begin rep
-
-    -- Do a run through one width
-    local z_dir = 1
     for y=1,HEIGHT do
-        local abort_round = do_abort and (z_dir == 1)
-        if not(abort_round) then
-            for z=1,LENGTH do
-                if walltest(cur_pos) then
-                    placer()
-                end
-                if not (z == LENGTH) then
-                    turtle.forward()
-                    cur_pos.z = cur_pos.z + z_dir
-                end
+        -- Do a run through one length
+        for z=1,LENGTH do
+            if walltest(cur_pos) then
+                placer()
+            end
+            if not(z == LENGTH) then
+                turtle.forward()
+                cur_pos.z = cur_pos.z + z_dir
             end
         end
 
-        turtle.up()
-        cur_pos.y = cur_pos.y + 1
+        if not(rep == WIDTH_REPEATS) and y == HEIGHT then
+            -- First go backwards
+            -- Go up one block if travelling right, two if left
+            -- Then travel horizontally
+            -- Then undo
 
-        if not(abort_round) then
-            turtle.turnRight()
-            turtle.turnRight()
+            for i=1,initial_pos.x do
+                turtle.back()
+            end
+            turtle.up()
+            if z_dir == 1 then
+                turtle.up()
+            end
+
+            turndir(z_dir)
+            for x=1,WIDTH do
+                turtle.forward()
+            end
+            turndir(-z_dir)
+
+            -- Undo uppies
+            turtle.down()
+            if z_dir == 1 then
+                turtle.down()
+            end
+            for i=1,initial_pos.x do
+                turtle.forward()
+            end
             z_dir = -z_dir
+            cur_pos.x = cur_pos.x + WIDTH
+
+            -- Go down
+            for yy=1,HEIGHT do
+                turtle.down()
+                cur_pos.y = cur_pos.y - 1
+            end
+        else
+            turtle.up()
+            cur_pos.y = cur_pos.y + 1
         end
 
-        os.startTimer(1)
-        local event, modemSide, senderChannel, replyChannel, message, senderDistance = os.pullEvent()
-        if event == "modem_message" and message == "abort" then
-            print("Aborting")
-            do_abort = true
-        end
-    end
-
-    -- Return to the beginning
-    if z_dir == -1 then
-        for z=1,LENGTH-1 do
-            turtle.forward()
-        end
         turtle.turnRight()
         turtle.turnRight()
     end
-
-    turtle.back() -- End rep
-
-    -- Travel to next width part
-    if (rep == WIDTH_REPEATS) then
-        --turtle.back()
-        --horiz_travel(1, WIDTH_REPEATS-1)
-        --turtle.forward()
-    else
-        horiz_travel(-1, 1)
-    end
-
-    -- Go back down
-    turtle.down()
-    for y=1,HEIGHT do
-        turtle.down()
-    end
-    cur_pos.y = 0
 end
 
 print("Done!")
+
