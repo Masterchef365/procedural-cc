@@ -18,21 +18,13 @@ ENDERCHEST_SLOT = 1
 BLOCK_SLOT = 2
 
 function walltest(pos)
-    local uv = (pos / LENGTH) * 2 - vector.new(1,1,1);
+    local u = pos.x + pos.z
+    local v = pos.x - pos.z
 
-    local zoomout = 40 -- LENGTH / 10
-    uv = uv * zoomout
-
-    local l2 = uv.z*uv.z + uv.x*uv.x
-
-    local k = LENGTH / math.max(l2, 1.0)
-
-    local a = math.floor(uv.x * k)
-    local b = math.floor(uv.z * k)
-
-    local nnn = bit.bxor(a, b) % 3
-    return nnn == 1
+    local nnn = bit.bxor(u, v) % 5
+    return nnn == 0
 end
+
 
 function placer()
     turtle.select(BLOCK_SLOT)   
