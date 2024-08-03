@@ -15,7 +15,7 @@ print("Width:", WIDTH)
 -- Configuration
 THRESHOLD = 1.0
 DENSITY = 4/(24*24*24)
-N = 8
+N = 2
 LENGTH = WIDTH*N
 HEIGHT = WIDTH*N
 WIDTH_REPEATS = N
@@ -75,8 +75,9 @@ function voronoi(pos)
 end
 
 function walltest(pos)
-    local v = voronoi(pos)
-    return v.prev_min_dist - v.min_dist < THRESHOLD
+    return true
+    --local v = voronoi(pos)
+    --return v.prev_min_dist - v.min_dist < THRESHOLD
 end
 
 function placer()
@@ -106,75 +107,60 @@ end
 
 local cur_pos = vector.new(initial_pos.x, initial_pos.y, initial_pos.z)
 
-function horiz_travel(direction, times)
-    -- Pick out our own Y and Z values
-    turtle.up()
-    for y=1,initial_pos.x do
-        turtle.up()
-    end
-    for y=1,initial_pos.x do
-        turtle.forward()
-    end
-
-
-    -- Travel horizontally
-    turndir(direction)
-    for time=1,times do
-        for x=1,WIDTH do
-            turtle.forward()
-        end
-    end
-    turndir(-direction)
-
-    -- Go back down
-    cur_pos.x = cur_pos.x - WIDTH
-    for y=1,initial_pos.x do
-        turtle.back()
-    end
-
-    for y=1,initial_pos.x do
-        turtle.down()
-    end
-end
-
 -- Thingy
 local z_dir = 1
+local aborting = false
 for rep=1,WIDTH_REPEATS do
     for y=1,HEIGHT do
+        -- Check for abort
+        os.startTimer(1)
+        local event, modemSide, senderChannel, replyChannel, message, senderDistance = os.pullEvent()
+        if event == "modem_message" and message == "abort" then
+            aborting = true
+        end
+
         -- Do a run through one length
-        for z=1,LENGTH do
-            if walltest(cur_pos) then
-                placer()
-            end
-            if not(z == LENGTH) then
-                turtle.forward()
-                cur_pos.z = cur_pos.z + z_dir
+        if not aborting then
+            for z=1,LENGTH do
+                if walltest(cur_pos) then
+                    placer()
+                end
+                if not(z == LENGTH) then
+                    turtle.forward()
+                    cur_pos.z = cur_pos.z + z_dir
+                end
             end
         end
 
-        if not(rep == WIDTH_REPEATS) and y == HEIGHT then
+        -- If at the top, travel over to the next rep
+        if y == HEIGHT and not(rep == WIDTH_REPEATS) then
             -- First go backwards
             -- Go up one block if travelling right, two if left
             -- Then travel horizontally
             -- Then undo
+            local y_dir = 1
+            if y % 2 == 0 then
+                y_dir = -1
+            end
+            local direction = z_dir * y_dir
 
             for i=1,initial_pos.x do
                 turtle.back()
             end
             turtle.up()
-            if z_dir == 1 then
+            if direction == 1 then
                 turtle.up()
             end
 
-            turndir(z_dir)
+            turndir(direction)
             for x=1,WIDTH do
                 turtle.forward()
             end
-            turndir(-z_dir)
+            turndir(-direction)
 
             -- Undo uppies
             turtle.down()
-            if z_dir == 1 then
+            if direction == 1 then
                 turtle.down()
             end
             for i=1,initial_pos.x do
@@ -184,7 +170,7 @@ for rep=1,WIDTH_REPEATS do
             cur_pos.x = cur_pos.x + WIDTH
 
             -- Go down
-            for yy=1,HEIGHT do
+            for yy=1,HEIGHT-1 do
                 turtle.down()
                 cur_pos.y = cur_pos.y - 1
             end
@@ -199,4 +185,5 @@ for rep=1,WIDTH_REPEATS do
 end
 
 print("Done!")
+
 
