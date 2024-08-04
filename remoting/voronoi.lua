@@ -14,8 +14,8 @@ print("Width:", WIDTH)
 
 -- Configuration
 THRESHOLD = 1.0
-DENSITY = 4/(24*24*24)
-N = 2
+DENSITY = 2/(24*24*24)
+N = 3
 LENGTH = WIDTH*N
 HEIGHT = WIDTH*N
 WIDTH_REPEATS = N
@@ -32,7 +32,7 @@ print("# of points:", N_POINTS)
 -- Utils
 function rand_point()
     return vector.new(
-        math.random(-WIDTH * (WIDTH_REPEATS-1), WIDTH),
+        math.random(0, WIDTH * WIDTH_REPEATS),
         math.random(0, HEIGHT),
         math.random(0, LENGTH)
     )    
@@ -75,9 +75,8 @@ function voronoi(pos)
 end
 
 function walltest(pos)
-    return true
-    --local v = voronoi(pos)
-    --return v.prev_min_dist - v.min_dist < THRESHOLD
+    local v = voronoi(pos)
+    return v.prev_min_dist - v.min_dist < THRESHOLD
 end
 
 function placer()
@@ -109,26 +108,23 @@ local cur_pos = vector.new(initial_pos.x, initial_pos.y, initial_pos.z)
 
 -- Thingy
 local z_dir = 1
-local aborting = false
 for rep=1,WIDTH_REPEATS do
     for y=1,HEIGHT do
         -- Check for abort
         os.startTimer(1)
         local event, modemSide, senderChannel, replyChannel, message, senderDistance = os.pullEvent()
         if event == "modem_message" and message == "abort" then
-            aborting = true
+            exit()
         end
 
         -- Do a run through one length
-        if not aborting then
-            for z=1,LENGTH do
-                if walltest(cur_pos) then
-                    placer()
-                end
-                if not(z == LENGTH) then
-                    turtle.forward()
-                    cur_pos.z = cur_pos.z + z_dir
-                end
+        for z=1,LENGTH do
+            if walltest(cur_pos) then
+                placer()
+            end
+            if not(z == LENGTH) then
+                turtle.forward()
+                cur_pos.z = cur_pos.z + z_dir
             end
         end
 
@@ -138,11 +134,7 @@ for rep=1,WIDTH_REPEATS do
             -- Go up one block if travelling right, two if left
             -- Then travel horizontally
             -- Then undo
-            local y_dir = 1
-            if y % 2 == 0 then
-                y_dir = -1
-            end
-            local direction = z_dir * y_dir
+            local direction = z_dir
 
             for i=1,initial_pos.x do
                 turtle.back()
@@ -166,7 +158,6 @@ for rep=1,WIDTH_REPEATS do
             for i=1,initial_pos.x do
                 turtle.forward()
             end
-            z_dir = -z_dir
             cur_pos.x = cur_pos.x + WIDTH
 
             -- Go down
@@ -178,6 +169,7 @@ for rep=1,WIDTH_REPEATS do
             turtle.up()
             cur_pos.y = cur_pos.y + 1
         end
+        z_dir = -z_dir
 
         turtle.turnRight()
         turtle.turnRight()
@@ -185,5 +177,7 @@ for rep=1,WIDTH_REPEATS do
 end
 
 print("Done!")
+
+
 
 

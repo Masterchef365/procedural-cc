@@ -29,7 +29,7 @@ if peripheral.getType("front") == "turtle" then
         command=remote_file,
     })
     
-    os.startTimer(500)
+    os.startTimer(300)
     print("Waiting...")
     repeat
         local event, modemSide, senderChannel, replyChannel, message, senderDistance = os.pullEvent()
