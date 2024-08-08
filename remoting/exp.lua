@@ -14,28 +14,30 @@ print("Width:", WIDTH)
 
 -- Configuration
 THRESHOLD = 1.0
-DENSITY = 8/(24*24*24)
-N = 3
+DENSITY = 10/(16^3)
+N = 1
 LENGTH = WIDTH*N
-HEIGHT = WIDTH*N
+HEIGHT = 20
 WIDTH_REPEATS = N
 ENDERCHEST_SLOT = 1
 BLOCK_SLOT = 2
-math.randomseed(8)
+math.randomseed(11)
 
 -- Determine # of points
 VOLUME = LENGTH * WIDTH * HEIGHT * WIDTH_REPEATS
-N_POINTS = 10 --math.floor(DENSITY * VOLUME)
+N_POINTS = math.floor(DENSITY * VOLUME)
 N_POINTS = math.max(N_POINTS, 3)
 print("# of points:", N_POINTS)
 
 -- Utils
 function rand_point()
-    return vector.new(
+    local point = vector.new(
         math.random(0, WIDTH * WIDTH_REPEATS),
         math.random(0, HEIGHT),
         math.random(0, LENGTH)
-    )    
+    )
+    point.ty = math.random(0, 1)
+    return point    
 end
 
 function distance(a, b)
@@ -54,18 +56,24 @@ end
 function voronoi(pos)
     local min_dist = 999999.0
     local min_index = 0
+    local min_ty = 0
+    local prev_min_ty = 0
     local prev_min_dist = min_dist
     local prevprev_min_dist = min_dist
     for i = 1,N_POINTS do
         local dist = distance(pos, points[i])
+        local ty = points[i].ty
         if dist < min_dist then
             prevprev_min_dist = prev_min_dist
             prev_min_dist = min_dist
+            prev_min_ty = min_ty
             min_dist = dist
             min_index = i
+            min_ty = ty
         elseif dist < prev_min_dist then
             prevprev_min_dist = prev_min_dist
             prev_min_dist = dist
+            prev_min_ty = ty
         elseif dist < prevprev_min_dist then
             prevprev_min_dist = dist
         end
@@ -76,16 +84,23 @@ function voronoi(pos)
             min_index=min_index,
             prev_min_dist=prev_min_dist,
             prevprev_min_dist=prevprev_min_dist,
+            min_ty=min_ty,
+            prev_min_ty=prev_min_ty,
         }
     end
 end
 
 function walltest(pos)
+    
     local v = voronoi(pos)
     local prev_less_min = v.prev_min_dist - v.min_dist < THRESHOLD
     local prevprev_less_min = v.prevprev_min_dist - v.min_dist < THRESHOLD
-    return prev_less_min and prevprev_less_min
-    --return prev_less_min
+    
+    if v.min_ty == v.prev_min_ty then
+        return prev_less_min and prevprev_less_min
+    else
+        return prev_less_min
+    end
     --return preprev_less_prev
 end
 
